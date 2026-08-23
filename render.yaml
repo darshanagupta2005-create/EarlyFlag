@@ -1,0 +1,54 @@
+services:
+  - type: web
+    name: earlyflag-api
+    runtime: java
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: mvn -DskipTests package
+    startCommand: java -jar target/earlyflag-backend-0.0.1-SNAPSHOT.jar
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: earlyflag-db
+          property: connectionString
+      - key: DB_USER
+        fromDatabase:
+          name: earlyflag-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: earlyflag-db
+          property: password
+      - key: APP_CORS_ALLOWED_ORIGINS
+        value: https://earlyflag-web.onrender.com
+
+  - type: web
+    name: earlyflag-risk-engine
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r risk_engine/requirements.txt
+    startCommand: gunicorn --chdir risk_engine --bind 0.0.0.0:$PORT web:app
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: earlyflag-db
+          property: connectionString
+
+  - type: web
+    name: earlyflag-web
+    runtime: static
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    rootDir: frontend
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://earlyflag-api.onrender.com/api
+
+databases:
+  - name: earlyflag-db
+    plan: free
+    region: oregon
+    databaseName: earlyflag_db
+    user: earlyflag
