@@ -1,0 +1,14 @@
+# Backend
+backend/target/
+*.class
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.angular/
+
+# Python
+__pycache__/
+*.pyc
+.env
+.venv/
