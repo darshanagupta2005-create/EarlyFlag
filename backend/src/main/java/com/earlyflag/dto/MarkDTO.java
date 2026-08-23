@@ -3,27 +3,19 @@ package com.earlyflag.dto;
 import java.math.BigDecimal;
 
 public class MarkDTO {
-    private Long id;
     private String subject;
     private String term;
     private BigDecimal score;
+    private BigDecimal maxScore;
 
     public MarkDTO() {
     }
 
-    public MarkDTO(Long id, String subject, String term, BigDecimal score) {
-        this.id = id;
+    public MarkDTO(String subject, String term, BigDecimal score, BigDecimal maxScore) {
         this.subject = subject;
         this.term = term;
         this.score = score;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
+        this.maxScore = maxScore;
     }
 
     public String getSubject() {
@@ -48,5 +40,13 @@ public class MarkDTO {
 
     public void setScore(BigDecimal score) {
         this.score = score;
+    }
+
+    public BigDecimal getMaxScore() {
+        return maxScore;
+    }
+
+    public void setMaxScore(BigDecimal maxScore) {
+        this.maxScore = maxScore;
     }
 }

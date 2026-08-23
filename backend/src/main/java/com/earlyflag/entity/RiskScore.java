@@ -1,5 +1,14 @@
 package com.earlyflag.entity;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,9 +18,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
-import java.time.LocalDateTime;
-import java.util.Objects;
 
 @Entity
 @Table(name = "risk_scores")
@@ -25,14 +31,20 @@ public class RiskScore {
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    @Column(name = "score", nullable = false)
-    private Integer score;
+    @Column(name = "score", nullable = false, precision = 5, scale = 2)
+    private BigDecimal score;
 
     @Column(name = "level", nullable = false)
     private String level;
 
-    @Column(name = "reason_codes", columnDefinition = "TEXT")
-    private String reasonCodes;
+    // Schema column is JSONB — Hibernate 6 maps List<String> straight to it.
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "reason_codes", nullable = false)
+    private List<String> reasonCodes;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "sub_scores", nullable = false)
+    private Map<String, Integer> subScores;
 
     @Column(name = "computed_at", nullable = false)
     private LocalDateTime computedAt;
@@ -40,20 +52,13 @@ public class RiskScore {
     public RiskScore() {
     }
 
-    public RiskScore(Long id, Student student, Integer score, String level, String reasonCodes, LocalDateTime computedAt) {
-        this.id = id;
+    public RiskScore(Student student, BigDecimal score, String level,
+                      List<String> reasonCodes, Map<String, Integer> subScores, LocalDateTime computedAt) {
         this.student = student;
         this.score = score;
         this.level = level;
         this.reasonCodes = reasonCodes;
-        this.computedAt = computedAt;
-    }
-
-    public RiskScore(Student student, Integer score, String level, String reasonCodes, LocalDateTime computedAt) {
-        this.student = student;
-        this.score = score;
-        this.level = level;
-        this.reasonCodes = reasonCodes;
+        this.subScores = subScores;
         this.computedAt = computedAt;
     }
 
@@ -73,11 +78,11 @@ public class RiskScore {
         this.student = student;
     }
 
-    public Integer getScore() {
+    public BigDecimal getScore() {
         return score;
     }
 
-    public void setScore(Integer score) {
+    public void setScore(BigDecimal score) {
         this.score = score;
     }
 
@@ -89,12 +94,20 @@ public class RiskScore {
         this.level = level;
     }
 
-    public String getReasonCodes() {
+    public List<String> getReasonCodes() {
         return reasonCodes;
     }
 
-    public void setReasonCodes(String reasonCodes) {
+    public void setReasonCodes(List<String> reasonCodes) {
         this.reasonCodes = reasonCodes;
+    }
+
+    public Map<String, Integer> getSubScores() {
+        return subScores;
+    }
+
+    public void setSubScores(Map<String, Integer> subScores) {
+        this.subScores = subScores;
     }
 
     public LocalDateTime getComputedAt() {
@@ -116,16 +129,5 @@ public class RiskScore {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "RiskScore{" +
-                "id=" + id +
-                ", score=" + score +
-                ", level='" + level + '\'' +
-                ", reasonCodes='" + reasonCodes + '\'' +
-                ", computedAt=" + computedAt +
-                '}';
     }
 }

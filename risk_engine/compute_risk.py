@@ -159,8 +159,8 @@ def connection_config() -> dict[str, Any]:
         "host": os.getenv("DB_HOST", "localhost"),
         "port": os.getenv("DB_PORT", "5432"),
         "dbname": os.getenv("DB_NAME", "earlyflag_db"),
-        "user": os.getenv("DB_USER", "postgres"),
-        "password": os.getenv("DB_PASSWORD", "gungun"),
+        "user": os.getenv("DB_USER", "earlyflag"),
+        "password": os.getenv("DB_PASSWORD", "earlyflag123"),
     }
 
 

@@ -1,23 +1,26 @@
 package com.earlyflag.entity;
 
+import java.util.Objects;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import java.util.Objects;
 
 @Entity
 @Table(name = "students")
 public class Student {
 
     @Id
-    @Column(name = "id", nullable = false, length = 64)
-    private String id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
     @Column(name = "name", nullable = false)
     private String name;
 
-    @Column(name = "class_name")
+    @Column(name = "class")
     private String className;
 
     @Column(name = "section")
@@ -26,18 +29,17 @@ public class Student {
     public Student() {
     }
 
-    public Student(String id, String name, String className, String section) {
-        this.id = id;
+    public Student(String name, String className, String section) {
         this.name = name;
         this.className = className;
         this.section = section;
     }
 
-    public String getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -80,11 +82,7 @@ public class Student {
 
     @Override
     public String toString() {
-        return "Student{" +
-                "id='" + id + '\'' +
-                ", name='" + name + '\'' +
-                ", className='" + className + '\'' +
-                ", section='" + section + '\'' +
-                '}';
+        return "Student{" + "id=" + id + ", name='" + name + '\'' +
+                ", className='" + className + '\'' + ", section='" + section + '\'' + '}';
     }
 }

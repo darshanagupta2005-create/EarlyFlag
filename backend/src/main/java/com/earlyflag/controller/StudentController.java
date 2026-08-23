@@ -2,12 +2,9 @@ package com.earlyflag.controller;
 
 import com.earlyflag.dto.InterventionDTO;
 import com.earlyflag.dto.InterventionRequestDTO;
-import com.earlyflag.dto.RiskScoreDTO;
-import com.earlyflag.dto.RiskScoreRequestDTO;
 import com.earlyflag.dto.StudentDetailDTO;
 import com.earlyflag.dto.StudentSummaryDTO;
 import com.earlyflag.entity.Intervention;
-import com.earlyflag.entity.RiskScore;
 import com.earlyflag.service.InterventionService;
 import com.earlyflag.service.StudentService;
 import org.springframework.http.HttpStatus;
@@ -35,49 +32,31 @@ public class StudentController {
 
     @GetMapping
     public ResponseEntity<List<StudentSummaryDTO>> getAllStudents() {
-        List<StudentSummaryDTO> students = studentService.getAllStudentSummaries();
-        return ResponseEntity.ok(students);
+        return ResponseEntity.ok(studentService.getAllStudentSummaries());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<StudentDetailDTO> getStudentById(@PathVariable("id") String id) {
-        StudentDetailDTO studentDetail = studentService.getStudentDetail(id);
-        return ResponseEntity.ok(studentDetail);
-    }
-
-    @PostMapping("/{id}/risk-score")
-    public ResponseEntity<RiskScoreDTO> saveRiskScore(
-            @PathVariable("id") String id,
-            @RequestBody RiskScoreRequestDTO dto) {
-        RiskScore saved = studentService.saveRiskScore(id, dto);
-        RiskScoreDTO responseDto = new RiskScoreDTO(
-                saved.getId(),
-                saved.getScore(),
-                saved.getLevel(),
-                saved.getReasonCodes(),
-                saved.getComputedAt()
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+    public ResponseEntity<StudentDetailDTO> getStudentById(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(studentService.getStudentDetail(id));
     }
 
     @PostMapping("/{id}/interventions")
     public ResponseEntity<InterventionDTO> logIntervention(
-            @PathVariable("id") String id,
+            @PathVariable("id") Long id,
             @RequestBody InterventionRequestDTO dto) {
         Intervention saved = interventionService.saveIntervention(id, dto);
-        InterventionDTO responseDto = new InterventionDTO(
+        InterventionDTO response = new InterventionDTO(
                 saved.getId(),
                 saved.getStudent().getId(),
                 saved.getActionTaken(),
                 saved.getActionDate(),
                 saved.getOutcome()
         );
-        return ResponseEntity.status(HttpStatus.CREATED).body(responseDto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{id}/interventions")
-    public ResponseEntity<List<InterventionDTO>> getInterventions(@PathVariable("id") String id) {
-        List<InterventionDTO> interventions = interventionService.getInterventionsByStudentId(id);
-        return ResponseEntity.ok(interventions);
+    public ResponseEntity<List<InterventionDTO>> getInterventions(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(interventionService.getInterventionsByStudentId(id));
     }
 }

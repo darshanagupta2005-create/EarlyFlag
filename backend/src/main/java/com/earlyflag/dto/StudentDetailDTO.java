@@ -3,75 +3,104 @@ package com.earlyflag.dto;
 import java.util.List;
 
 public class StudentDetailDTO {
-    private StudentProfileDTO profile;
-    private List<AttendanceDTO> attendanceHistory;
-    private List<MarkDTO> marksHistory;
-    private List<FeeDTO> feesHistory;
-    private RiskScoreDTO latestRiskScore;
-    private List<InterventionDTO> interventions;
+    private Long id;
+    private String name;
+    private String className;
+    private String section;
+    private List<AttendanceDTO> attendanceTrend;
+    private List<MarkDTO> marksTrend;
+    private List<FeeDTO> fees;
+    private List<EngagementDTO> engagement;
+    private DetailedRiskDTO latestRisk;
 
     public StudentDetailDTO() {
     }
 
-    public StudentDetailDTO(StudentProfileDTO profile,
-                            List<AttendanceDTO> attendanceHistory,
-                            List<MarkDTO> marksHistory,
-                            List<FeeDTO> feesHistory,
-                            RiskScoreDTO latestRiskScore,
-                            List<InterventionDTO> interventions) {
-        this.profile = profile;
-        this.attendanceHistory = attendanceHistory;
-        this.marksHistory = marksHistory;
-        this.feesHistory = feesHistory;
-        this.latestRiskScore = latestRiskScore;
-        this.interventions = interventions;
+    public StudentDetailDTO(Long id, String name, String className, String section,
+            List<AttendanceDTO> attendanceTrend, List<MarkDTO> marksTrend,
+            List<FeeDTO> fees, List<EngagementDTO> engagement,
+            DetailedRiskDTO latestRisk) {
+        this.id = id;
+        this.name = name;
+        this.className = className;
+        this.section = section;
+        this.attendanceTrend = attendanceTrend;
+        this.marksTrend = marksTrend;
+        this.fees = fees;
+        this.engagement = engagement;
+        this.latestRisk = latestRisk;
     }
 
-    public StudentProfileDTO getProfile() {
-        return profile;
+    public Long getId() {
+        return id;
     }
 
-    public void setProfile(StudentProfileDTO profile) {
-        this.profile = profile;
+    public void setId(Long id) {
+        this.id = id;
     }
 
-    public List<AttendanceDTO> getAttendanceHistory() {
-        return attendanceHistory;
+    public String getName() {
+        return name;
     }
 
-    public void setAttendanceHistory(List<AttendanceDTO> attendanceHistory) {
-        this.attendanceHistory = attendanceHistory;
+    public void setName(String name) {
+        this.name = name;
     }
 
-    public List<MarkDTO> getMarksHistory() {
-        return marksHistory;
+    @com.fasterxml.jackson.annotation.JsonProperty("class")
+    public String getClassName() {
+        return className;
     }
 
-    public void setMarksHistory(List<MarkDTO> marksHistory) {
-        this.marksHistory = marksHistory;
+    public void setClassName(String className) {
+        this.className = className;
     }
 
-    public List<FeeDTO> getFeesHistory() {
-        return feesHistory;
+    public String getSection() {
+        return section;
     }
 
-    public void setFeesHistory(List<FeeDTO> feesHistory) {
-        this.feesHistory = feesHistory;
+    public void setSection(String section) {
+        this.section = section;
     }
 
-    public RiskScoreDTO getLatestRiskScore() {
-        return latestRiskScore;
+    public List<AttendanceDTO> getAttendanceTrend() {
+        return attendanceTrend;
     }
 
-    public void setLatestRiskScore(RiskScoreDTO latestRiskScore) {
-        this.latestRiskScore = latestRiskScore;
+    public void setAttendanceTrend(List<AttendanceDTO> attendanceTrend) {
+        this.attendanceTrend = attendanceTrend;
     }
 
-    public List<InterventionDTO> getInterventions() {
-        return interventions;
+    public List<MarkDTO> getMarksTrend() {
+        return marksTrend;
     }
 
-    public void setInterventions(List<InterventionDTO> interventions) {
-        this.interventions = interventions;
+    public void setMarksTrend(List<MarkDTO> marksTrend) {
+        this.marksTrend = marksTrend;
+    }
+
+    public List<FeeDTO> getFees() {
+        return fees;
+    }
+
+    public void setFees(List<FeeDTO> fees) {
+        this.fees = fees;
+    }
+
+    public List<EngagementDTO> getEngagement() {
+        return engagement;
+    }
+
+    public void setEngagement(List<EngagementDTO> engagement) {
+        this.engagement = engagement;
+    }
+
+    public DetailedRiskDTO getLatestRisk() {
+        return latestRisk;
+    }
+
+    public void setLatestRisk(DetailedRiskDTO latestRisk) {
+        this.latestRisk = latestRisk;
     }
 }

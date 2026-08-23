@@ -1,5 +1,8 @@
 package com.earlyflag.entity;
 
+import java.math.BigDecimal;
+import java.util.Objects;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,9 +12,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
-import java.math.BigDecimal;
-import java.util.Objects;
 
 @Entity
 @Table(name = "marks")
@@ -34,22 +34,18 @@ public class Mark {
     @Column(name = "score", nullable = false, precision = 5, scale = 2)
     private BigDecimal score;
 
+    @Column(name = "max_score", precision = 5, scale = 2)
+    private BigDecimal maxScore;
+
     public Mark() {
     }
 
-    public Mark(Long id, Student student, String subject, String term, BigDecimal score) {
-        this.id = id;
+    public Mark(Student student, String subject, String term, BigDecimal score, BigDecimal maxScore) {
         this.student = student;
         this.subject = subject;
         this.term = term;
         this.score = score;
-    }
-
-    public Mark(Student student, String subject, String term, BigDecimal score) {
-        this.student = student;
-        this.subject = subject;
-        this.term = term;
-        this.score = score;
+        this.maxScore = maxScore;
     }
 
     public Long getId() {
@@ -92,6 +88,14 @@ public class Mark {
         this.score = score;
     }
 
+    public BigDecimal getMaxScore() {
+        return maxScore;
+    }
+
+    public void setMaxScore(BigDecimal maxScore) {
+        this.maxScore = maxScore;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -103,15 +107,5 @@ public class Mark {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "Mark{" +
-                "id=" + id +
-                ", subject='" + subject + '\'' +
-                ", term='" + term + '\'' +
-                ", score=" + score +
-                '}';
     }
 }

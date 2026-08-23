@@ -4,19 +4,19 @@ import java.time.LocalDate;
 
 public class InterventionDTO {
     private Long id;
-    private String studentId;
+    private Long studentId;
     private String actionTaken;
-    private LocalDate actionDate;
+    private LocalDate date;
     private String outcome;
 
     public InterventionDTO() {
     }
 
-    public InterventionDTO(Long id, String studentId, String actionTaken, LocalDate actionDate, String outcome) {
+    public InterventionDTO(Long id, Long studentId, String actionTaken, LocalDate date, String outcome) {
         this.id = id;
         this.studentId = studentId;
         this.actionTaken = actionTaken;
-        this.actionDate = actionDate;
+        this.date = date;
         this.outcome = outcome;
     }
 
@@ -28,11 +28,11 @@ public class InterventionDTO {
         this.id = id;
     }
 
-    public String getStudentId() {
+    public Long getStudentId() {
         return studentId;
     }
 
-    public void setStudentId(String studentId) {
+    public void setStudentId(Long studentId) {
         this.studentId = studentId;
     }
 
@@ -44,12 +44,12 @@ public class InterventionDTO {
         this.actionTaken = actionTaken;
     }
 
-    public LocalDate getActionDate() {
-        return actionDate;
+    public LocalDate getDate() {
+        return date;
     }
 
-    public void setActionDate(LocalDate actionDate) {
-        this.actionDate = actionDate;
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 
     public String getOutcome() {

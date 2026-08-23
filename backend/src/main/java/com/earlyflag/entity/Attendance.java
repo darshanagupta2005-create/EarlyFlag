@@ -1,5 +1,8 @@
 package com.earlyflag.entity;
 
+import java.time.LocalDate;
+import java.util.Objects;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,9 +12,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
-import java.time.LocalDate;
-import java.util.Objects;
 
 @Entity
 @Table(name = "attendance")
@@ -25,20 +25,13 @@ public class Attendance {
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    @Column(name = "attendance_date", nullable = false)
+    @Column(name = "date", nullable = false)
     private LocalDate attendanceDate;
 
     @Column(name = "status", nullable = false)
     private String status;
 
     public Attendance() {
-    }
-
-    public Attendance(Long id, Student student, LocalDate attendanceDate, String status) {
-        this.id = id;
-        this.student = student;
-        this.attendanceDate = attendanceDate;
-        this.status = status;
     }
 
     public Attendance(Student student, LocalDate attendanceDate, String status) {
@@ -90,14 +83,5 @@ public class Attendance {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "Attendance{" +
-                "id=" + id +
-                ", attendanceDate=" + attendanceDate +
-                ", status='" + status + '\'' +
-                '}';
     }
 }

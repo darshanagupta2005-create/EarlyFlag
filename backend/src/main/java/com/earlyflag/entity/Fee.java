@@ -1,5 +1,9 @@
 package com.earlyflag.entity;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.Objects;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,10 +13,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
-import java.math.BigDecimal;
-import java.time.LocalDate;
-import java.util.Objects;
 
 @Entity
 @Table(name = "fees")
@@ -35,22 +35,18 @@ public class Fee {
     @Column(name = "paid_status", nullable = false)
     private String paidStatus;
 
+    @Column(name = "paid_date")
+    private LocalDate paidDate;
+
     public Fee() {
     }
 
-    public Fee(Long id, Student student, LocalDate dueDate, BigDecimal amount, String paidStatus) {
-        this.id = id;
+    public Fee(Student student, LocalDate dueDate, BigDecimal amount, String paidStatus, LocalDate paidDate) {
         this.student = student;
         this.dueDate = dueDate;
         this.amount = amount;
         this.paidStatus = paidStatus;
-    }
-
-    public Fee(Student student, LocalDate dueDate, BigDecimal amount, String paidStatus) {
-        this.student = student;
-        this.dueDate = dueDate;
-        this.amount = amount;
-        this.paidStatus = paidStatus;
+        this.paidDate = paidDate;
     }
 
     public Long getId() {
@@ -93,6 +89,14 @@ public class Fee {
         this.paidStatus = paidStatus;
     }
 
+    public LocalDate getPaidDate() {
+        return paidDate;
+    }
+
+    public void setPaidDate(LocalDate paidDate) {
+        this.paidDate = paidDate;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -104,15 +108,5 @@ public class Fee {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "Fee{" +
-                "id=" + id +
-                ", dueDate=" + dueDate +
-                ", amount=" + amount +
-                ", paidStatus='" + paidStatus + '\'' +
-                '}';
     }
 }

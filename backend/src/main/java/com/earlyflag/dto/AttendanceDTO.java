@@ -3,33 +3,23 @@ package com.earlyflag.dto;
 import java.time.LocalDate;
 
 public class AttendanceDTO {
-    private Long id;
-    private LocalDate attendanceDate;
+    private LocalDate date;
     private String status;
 
     public AttendanceDTO() {
     }
 
-    public AttendanceDTO(Long id, LocalDate attendanceDate, String status) {
-        this.id = id;
-        this.attendanceDate = attendanceDate;
+    public AttendanceDTO(LocalDate date, String status) {
+        this.date = date;
         this.status = status;
     }
 
-    public Long getId() {
-        return id;
+    public LocalDate getDate() {
+        return date;
     }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public LocalDate getAttendanceDate() {
-        return attendanceDate;
-    }
-
-    public void setAttendanceDate(LocalDate attendanceDate) {
-        this.attendanceDate = attendanceDate;
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 
     public String getStatus() {

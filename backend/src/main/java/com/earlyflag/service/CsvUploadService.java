@@ -1,11 +1,12 @@
 package com.earlyflag.service;
 
-import com.earlyflag.dto.CsvUploadResponseDTO;
 import com.earlyflag.entity.Attendance;
+import com.earlyflag.entity.Engagement;
 import com.earlyflag.entity.Fee;
 import com.earlyflag.entity.Mark;
 import com.earlyflag.entity.Student;
 import com.earlyflag.repository.AttendanceRepository;
+import com.earlyflag.repository.EngagementRepository;
 import com.earlyflag.repository.FeeRepository;
 import com.earlyflag.repository.MarkRepository;
 import com.earlyflag.repository.StudentRepository;
@@ -29,6 +30,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Every CSV row must reference a student_id that already exists in the
+ * students table (schema: id SERIAL). Rows referencing an unknown student_id
+ * are skipped and reported as an error — we do not fabricate students from
+ * arbitrary CSV values, since students.id is DB-generated.
+ */
 @Service
 public class CsvUploadService {
 
@@ -38,6 +45,7 @@ public class CsvUploadService {
     private final AttendanceRepository attendanceRepository;
     private final MarkRepository markRepository;
     private final FeeRepository feeRepository;
+    private final EngagementRepository engagementRepository;
 
     private static final DateTimeFormatter[] DATE_FORMATTERS = new DateTimeFormatter[]{
             DateTimeFormatter.ISO_LOCAL_DATE,
@@ -49,214 +57,210 @@ public class CsvUploadService {
     };
 
     public CsvUploadService(StudentRepository studentRepository,
-                            AttendanceRepository attendanceRepository,
-                            MarkRepository markRepository,
-                            FeeRepository feeRepository) {
+                             AttendanceRepository attendanceRepository,
+                             MarkRepository markRepository,
+                             FeeRepository feeRepository,
+                             EngagementRepository engagementRepository) {
         this.studentRepository = studentRepository;
         this.attendanceRepository = attendanceRepository;
         this.markRepository = markRepository;
         this.feeRepository = feeRepository;
+        this.engagementRepository = engagementRepository;
     }
 
     @Transactional
-    public CsvUploadResponseDTO uploadAttendanceCsv(MultipartFile file) {
+    public int uploadAttendanceCsv(MultipartFile file) {
         validateFile(file);
+        List<Attendance> toSave = new ArrayList<>();
         List<String> errors = new ArrayList<>();
-        List<Attendance> attendancesToSave = new ArrayList<>();
         int rowNumber = 1;
 
         try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
              CSVReader csvReader = new CSVReaderBuilder(reader).build()) {
 
-            String[] header = csvReader.readNext();
-            if (header == null) {
-                return new CsvUploadResponseDTO(false, "CSV file is empty", 0, errors);
-            }
-
-            Map<String, Integer> colMap = buildColumnIndexMap(header);
-            int studentIdCol = findColumnIndex(colMap, "student_id", "studentid", "student", "id");
-            int dateCol = findColumnIndex(colMap, "attendance_date", "attendancedate", "date");
-            int statusCol = findColumnIndex(colMap, "status", "attendance_status", "attendance");
-
-            if (studentIdCol == -1 || dateCol == -1 || statusCol == -1) {
-                return new CsvUploadResponseDTO(false,
-                        "Missing required columns. Expected: student_id, attendance_date, status", 0, errors);
-            }
+            String[] header = requireHeader(csvReader, "student_id, date, status");
+            Map<String, Integer> col = buildColumnIndexMap(header);
+            int studentIdCol = requireColumn(col, "student_id");
+            int dateCol = requireColumn(col, "date");
+            int statusCol = requireColumn(col, "status");
 
             String[] line;
             while ((line = csvReader.readNext()) != null) {
                 rowNumber++;
-                if (isRowEmpty(line)) {
-                    continue;
-                }
-
+                if (isRowEmpty(line)) continue;
                 try {
-                    String studentId = line[studentIdCol].trim();
-                    String dateStr = line[dateCol].trim();
+                    Long studentId = Long.parseLong(line[studentIdCol].trim());
+                    Student student = studentRepository.findById(studentId)
+                            .orElseThrow(() -> new IllegalArgumentException("Unknown student_id " + studentId));
+                    LocalDate date = parseDate(line[dateCol].trim());
                     String status = line[statusCol].trim();
-
-                    if (studentId.isEmpty() || dateStr.isEmpty() || status.isEmpty()) {
-                        errors.add("Row " + rowNumber + ": Empty required value");
-                        continue;
-                    }
-
-                    Student student = getOrCreateStudent(studentId);
-                    LocalDate attendanceDate = parseDate(dateStr);
-
-                    attendancesToSave.add(new Attendance(student, attendanceDate, status));
+                    toSave.add(new Attendance(student, date, status));
                 } catch (Exception e) {
                     errors.add("Row " + rowNumber + ": " + e.getMessage());
                 }
             }
-
-            if (!attendancesToSave.isEmpty()) {
-                attendanceRepository.saveAll(attendancesToSave);
-            }
-
-            return new CsvUploadResponseDTO(true, "Attendance CSV processed successfully", attendancesToSave.size(), errors);
-
         } catch (Exception e) {
             log.error("Error processing attendance CSV", e);
-            return new CsvUploadResponseDTO(false, "Failed to process attendance CSV: " + e.getMessage(), 0, errors);
+            throw new IllegalArgumentException("Failed to process attendance CSV: " + e.getMessage());
         }
+
+        if (!toSave.isEmpty()) attendanceRepository.saveAll(toSave);
+        if (!errors.isEmpty()) log.warn("Attendance upload had {} skipped rows: {}", errors.size(), errors);
+        return toSave.size();
     }
 
     @Transactional
-    public CsvUploadResponseDTO uploadMarksCsv(MultipartFile file) {
+    public int uploadMarksCsv(MultipartFile file) {
         validateFile(file);
+        List<Mark> toSave = new ArrayList<>();
         List<String> errors = new ArrayList<>();
-        List<Mark> marksToSave = new ArrayList<>();
         int rowNumber = 1;
 
         try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
              CSVReader csvReader = new CSVReaderBuilder(reader).build()) {
 
-            String[] header = csvReader.readNext();
-            if (header == null) {
-                return new CsvUploadResponseDTO(false, "CSV file is empty", 0, errors);
-            }
-
-            Map<String, Integer> colMap = buildColumnIndexMap(header);
-            int studentIdCol = findColumnIndex(colMap, "student_id", "studentid", "student", "id");
-            int subjectCol = findColumnIndex(colMap, "subject", "course");
-            int termCol = findColumnIndex(colMap, "term", "semester", "exam");
-            int scoreCol = findColumnIndex(colMap, "score", "marks", "mark", "grade");
-
-            if (studentIdCol == -1 || subjectCol == -1 || termCol == -1 || scoreCol == -1) {
-                return new CsvUploadResponseDTO(false,
-                        "Missing required columns. Expected: student_id, subject, term, score", 0, errors);
-            }
+            String[] header = requireHeader(csvReader, "student_id, subject, term, score, max_score");
+            Map<String, Integer> col = buildColumnIndexMap(header);
+            int studentIdCol = requireColumn(col, "student_id");
+            int subjectCol = requireColumn(col, "subject");
+            int termCol = requireColumn(col, "term");
+            int scoreCol = requireColumn(col, "score");
+            int maxScoreCol = col.getOrDefault("maxscore", col.getOrDefault("max_score", -1));
 
             String[] line;
             while ((line = csvReader.readNext()) != null) {
                 rowNumber++;
-                if (isRowEmpty(line)) {
-                    continue;
-                }
-
+                if (isRowEmpty(line)) continue;
                 try {
-                    String studentId = line[studentIdCol].trim();
+                    Long studentId = Long.parseLong(line[studentIdCol].trim());
+                    Student student = studentRepository.findById(studentId)
+                            .orElseThrow(() -> new IllegalArgumentException("Unknown student_id " + studentId));
                     String subject = line[subjectCol].trim();
                     String term = line[termCol].trim();
-                    String scoreStr = line[scoreCol].trim();
-
-                    if (studentId.isEmpty() || subject.isEmpty() || term.isEmpty() || scoreStr.isEmpty()) {
-                        errors.add("Row " + rowNumber + ": Empty required value");
-                        continue;
-                    }
-
-                    Student student = getOrCreateStudent(studentId);
-                    BigDecimal score = new BigDecimal(scoreStr);
-
-                    marksToSave.add(new Mark(student, subject, term, score));
+                    BigDecimal score = new BigDecimal(line[scoreCol].trim());
+                    BigDecimal maxScore = (maxScoreCol >= 0 && maxScoreCol < line.length && !line[maxScoreCol].isBlank())
+                            ? new BigDecimal(line[maxScoreCol].trim())
+                            : BigDecimal.valueOf(100);
+                    toSave.add(new Mark(student, subject, term, score, maxScore));
                 } catch (Exception e) {
                     errors.add("Row " + rowNumber + ": " + e.getMessage());
                 }
             }
-
-            if (!marksToSave.isEmpty()) {
-                markRepository.saveAll(marksToSave);
-            }
-
-            return new CsvUploadResponseDTO(true, "Marks CSV processed successfully", marksToSave.size(), errors);
-
         } catch (Exception e) {
             log.error("Error processing marks CSV", e);
-            return new CsvUploadResponseDTO(false, "Failed to process marks CSV: " + e.getMessage(), 0, errors);
+            throw new IllegalArgumentException("Failed to process marks CSV: " + e.getMessage());
         }
+
+        if (!toSave.isEmpty()) markRepository.saveAll(toSave);
+        if (!errors.isEmpty()) log.warn("Marks upload had {} skipped rows: {}", errors.size(), errors);
+        return toSave.size();
     }
 
     @Transactional
-    public CsvUploadResponseDTO uploadFeesCsv(MultipartFile file) {
+    public int uploadFeesCsv(MultipartFile file) {
         validateFile(file);
+        List<Fee> toSave = new ArrayList<>();
         List<String> errors = new ArrayList<>();
-        List<Fee> feesToSave = new ArrayList<>();
         int rowNumber = 1;
 
         try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
              CSVReader csvReader = new CSVReaderBuilder(reader).build()) {
 
-            String[] header = csvReader.readNext();
-            if (header == null) {
-                return new CsvUploadResponseDTO(false, "CSV file is empty", 0, errors);
-            }
-
-            Map<String, Integer> colMap = buildColumnIndexMap(header);
-            int studentIdCol = findColumnIndex(colMap, "student_id", "studentid", "student", "id");
-            int dueDateCol = findColumnIndex(colMap, "due_date", "duedate", "date");
-            int amountCol = findColumnIndex(colMap, "amount", "fee_amount", "fee");
-            int paidStatusCol = findColumnIndex(colMap, "paid_status", "paidstatus", "status", "payment_status");
-
-            if (studentIdCol == -1 || dueDateCol == -1 || amountCol == -1 || paidStatusCol == -1) {
-                return new CsvUploadResponseDTO(false,
-                        "Missing required columns. Expected: student_id, due_date, amount, paid_status", 0, errors);
-            }
+            String[] header = requireHeader(csvReader, "student_id, due_date, amount, paid_status, paid_date");
+            Map<String, Integer> col = buildColumnIndexMap(header);
+            int studentIdCol = requireColumn(col, "student_id");
+            int dueDateCol = requireColumn(col, "due_date");
+            int amountCol = requireColumn(col, "amount");
+            int paidStatusCol = requireColumn(col, "paid_status");
+            int paidDateCol = col.getOrDefault("paiddate", col.getOrDefault("paid_date", -1));
 
             String[] line;
             while ((line = csvReader.readNext()) != null) {
                 rowNumber++;
-                if (isRowEmpty(line)) {
-                    continue;
-                }
-
+                if (isRowEmpty(line)) continue;
                 try {
-                    String studentId = line[studentIdCol].trim();
-                    String dueDateStr = line[dueDateCol].trim();
-                    String amountStr = line[amountCol].trim();
-                    String paidStatus = line[paidStatusCol].trim();
-
-                    if (studentId.isEmpty() || dueDateStr.isEmpty() || amountStr.isEmpty() || paidStatus.isEmpty()) {
-                        errors.add("Row " + rowNumber + ": Empty required value");
-                        continue;
-                    }
-
-                    Student student = getOrCreateStudent(studentId);
-                    LocalDate dueDate = parseDate(dueDateStr);
-                    BigDecimal amount = new BigDecimal(amountStr);
-
-                    feesToSave.add(new Fee(student, dueDate, amount, paidStatus.toUpperCase()));
+                    Long studentId = Long.parseLong(line[studentIdCol].trim());
+                    Student student = studentRepository.findById(studentId)
+                            .orElseThrow(() -> new IllegalArgumentException("Unknown student_id " + studentId));
+                    LocalDate dueDate = parseDate(line[dueDateCol].trim());
+                    BigDecimal amount = new BigDecimal(line[amountCol].trim());
+                    String paidStatus = line[paidStatusCol].trim().toLowerCase();
+                    LocalDate paidDate = (paidDateCol >= 0 && paidDateCol < line.length && !line[paidDateCol].isBlank())
+                            ? parseDate(line[paidDateCol].trim())
+                            : null;
+                    toSave.add(new Fee(student, dueDate, amount, paidStatus, paidDate));
                 } catch (Exception e) {
                     errors.add("Row " + rowNumber + ": " + e.getMessage());
                 }
             }
-
-            if (!feesToSave.isEmpty()) {
-                feeRepository.saveAll(feesToSave);
-            }
-
-            return new CsvUploadResponseDTO(true, "Fees CSV processed successfully", feesToSave.size(), errors);
-
         } catch (Exception e) {
             log.error("Error processing fees CSV", e);
-            return new CsvUploadResponseDTO(false, "Failed to process fees CSV: " + e.getMessage(), 0, errors);
+            throw new IllegalArgumentException("Failed to process fees CSV: " + e.getMessage());
         }
+
+        if (!toSave.isEmpty()) feeRepository.saveAll(toSave);
+        if (!errors.isEmpty()) log.warn("Fees upload had {} skipped rows: {}", errors.size(), errors);
+        return toSave.size();
     }
 
-    private Student getOrCreateStudent(String studentId) {
-        return studentRepository.findById(studentId).orElseGet(() -> {
-            Student newStudent = new Student(studentId, "Student " + studentId, "Default Class", "A");
-            return studentRepository.save(newStudent);
-        });
+    @Transactional
+    public int uploadEngagementCsv(MultipartFile file) {
+        validateFile(file);
+        List<Engagement> toSave = new ArrayList<>();
+        List<String> errors = new ArrayList<>();
+        int rowNumber = 1;
+
+        try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
+             CSVReader csvReader = new CSVReaderBuilder(reader).build()) {
+
+            String[] header = requireHeader(csvReader, "student_id, date, flag_type, notes");
+            Map<String, Integer> col = buildColumnIndexMap(header);
+            int studentIdCol = requireColumn(col, "student_id");
+            int dateCol = requireColumn(col, "date");
+            int flagTypeCol = requireColumn(col, "flag_type");
+            int notesCol = col.getOrDefault("notes", -1);
+
+            String[] line;
+            while ((line = csvReader.readNext()) != null) {
+                rowNumber++;
+                if (isRowEmpty(line)) continue;
+                try {
+                    Long studentId = Long.parseLong(line[studentIdCol].trim());
+                    Student student = studentRepository.findById(studentId)
+                            .orElseThrow(() -> new IllegalArgumentException("Unknown student_id " + studentId));
+                    LocalDate date = parseDate(line[dateCol].trim());
+                    String flagType = line[flagTypeCol].trim();
+                    String notes = (notesCol >= 0 && notesCol < line.length) ? line[notesCol].trim() : null;
+                    toSave.add(new Engagement(student, date, flagType, notes));
+                } catch (Exception e) {
+                    errors.add("Row " + rowNumber + ": " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error processing engagement CSV", e);
+            throw new IllegalArgumentException("Failed to process engagement CSV: " + e.getMessage());
+        }
+
+        if (!toSave.isEmpty()) engagementRepository.saveAll(toSave);
+        if (!errors.isEmpty()) log.warn("Engagement upload had {} skipped rows: {}", errors.size(), errors);
+        return toSave.size();
+    }
+
+    private String[] requireHeader(CSVReader csvReader, String expectedCols) throws Exception {
+        String[] header = csvReader.readNext();
+        if (header == null) {
+            throw new IllegalArgumentException("CSV file is empty. Expected columns: " + expectedCols);
+        }
+        return header;
+    }
+
+    private int requireColumn(Map<String, Integer> colMap, String name) {
+        Integer idx = colMap.get(name.replace("_", ""));
+        if (idx == null) idx = colMap.get(name);
+        if (idx == null) {
+            throw new IllegalArgumentException("Missing required column: " + name);
+        }
+        return idx;
     }
 
     private void validateFile(MultipartFile file) {
@@ -268,9 +272,7 @@ public class CsvUploadService {
     private boolean isRowEmpty(String[] row) {
         if (row == null || row.length == 0) return true;
         for (String cell : row) {
-            if (cell != null && !cell.trim().isEmpty()) {
-                return false;
-            }
+            if (cell != null && !cell.trim().isEmpty()) return false;
         }
         return true;
     }
@@ -279,25 +281,12 @@ public class CsvUploadService {
         Map<String, Integer> map = new HashMap<>();
         for (int i = 0; i < header.length; i++) {
             if (header[i] != null) {
-                String cleanHeader = header[i].trim().toLowerCase().replaceAll("[\\s_-]+", "");
-                map.put(cleanHeader, i);
+                String clean = header[i].trim().toLowerCase().replaceAll("[\\s_-]+", "");
+                map.put(clean, i);
                 map.put(header[i].trim().toLowerCase(), i);
             }
         }
         return map;
-    }
-
-    private int findColumnIndex(Map<String, Integer> colMap, String... candidateNames) {
-        for (String name : candidateNames) {
-            String cleanName = name.toLowerCase().replaceAll("[\\s_-]+", "");
-            if (colMap.containsKey(cleanName)) {
-                return colMap.get(cleanName);
-            }
-            if (colMap.containsKey(name.toLowerCase())) {
-                return colMap.get(name.toLowerCase());
-            }
-        }
-        return -1;
     }
 
     private LocalDate parseDate(String dateStr) {

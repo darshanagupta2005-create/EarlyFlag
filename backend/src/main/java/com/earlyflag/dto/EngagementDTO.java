@@ -3,33 +3,33 @@ package com.earlyflag.dto;
 import java.time.LocalDate;
 
 public class EngagementDTO {
-    private Long id;
-    private LocalDate logDate;
+    private LocalDate date;
+    private String flagType;
     private String notes;
 
     public EngagementDTO() {
     }
 
-    public EngagementDTO(Long id, LocalDate logDate, String notes) {
-        this.id = id;
-        this.logDate = logDate;
+    public EngagementDTO(LocalDate date, String flagType, String notes) {
+        this.date = date;
+        this.flagType = flagType;
         this.notes = notes;
     }
 
-    public Long getId() {
-        return id;
+    public LocalDate getDate() {
+        return date;
     }
 
-    public void setId(Long id) {
-        this.id = id;
+    public void setDate(LocalDate date) {
+        this.date = date;
     }
 
-    public LocalDate getLogDate() {
-        return logDate;
+    public String getFlagType() {
+        return flagType;
     }
 
-    public void setLogDate(LocalDate logDate) {
-        this.logDate = logDate;
+    public void setFlagType(String flagType) {
+        this.flagType = flagType;
     }
 
     public String getNotes() {

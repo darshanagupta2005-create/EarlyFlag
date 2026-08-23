@@ -1,5 +1,8 @@
 package com.earlyflag.entity;
 
+import java.time.LocalDate;
+import java.util.Objects;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -9,9 +12,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
-import java.time.LocalDate;
-import java.util.Objects;
 
 @Entity
 @Table(name = "interventions")
@@ -28,21 +28,13 @@ public class Intervention {
     @Column(name = "action_taken", nullable = false, columnDefinition = "TEXT")
     private String actionTaken;
 
-    @Column(name = "action_date", nullable = false)
+    @Column(name = "date", nullable = false)
     private LocalDate actionDate;
 
     @Column(name = "outcome", columnDefinition = "TEXT")
     private String outcome;
 
     public Intervention() {
-    }
-
-    public Intervention(Long id, Student student, String actionTaken, LocalDate actionDate, String outcome) {
-        this.id = id;
-        this.student = student;
-        this.actionTaken = actionTaken;
-        this.actionDate = actionDate;
-        this.outcome = outcome;
     }
 
     public Intervention(Student student, String actionTaken, LocalDate actionDate, String outcome) {
@@ -103,15 +95,5 @@ public class Intervention {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "Intervention{" +
-                "id=" + id +
-                ", actionTaken='" + actionTaken + '\'' +
-                ", actionDate=" + actionDate +
-                ", outcome='" + outcome + '\'' +
-                '}';
     }
 }

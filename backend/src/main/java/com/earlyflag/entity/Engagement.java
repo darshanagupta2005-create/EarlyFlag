@@ -1,5 +1,8 @@
 package com.earlyflag.entity;
 
+import java.time.LocalDate;
+import java.util.Objects;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -10,11 +13,8 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
-import java.time.LocalDate;
-import java.util.Objects;
-
 @Entity
-@Table(name = "engagements")
+@Table(name = "engagement")
 public class Engagement {
 
     @Id
@@ -25,8 +25,11 @@ public class Engagement {
     @JoinColumn(name = "student_id", nullable = false)
     private Student student;
 
-    @Column(name = "log_date", nullable = false)
+    @Column(name = "date", nullable = false)
     private LocalDate logDate;
+
+    @Column(name = "flag_type", nullable = false)
+    private String flagType;
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
@@ -34,16 +37,10 @@ public class Engagement {
     public Engagement() {
     }
 
-    public Engagement(Long id, Student student, LocalDate logDate, String notes) {
-        this.id = id;
+    public Engagement(Student student, LocalDate logDate, String flagType, String notes) {
         this.student = student;
         this.logDate = logDate;
-        this.notes = notes;
-    }
-
-    public Engagement(Student student, LocalDate logDate, String notes) {
-        this.student = student;
-        this.logDate = logDate;
+        this.flagType = flagType;
         this.notes = notes;
     }
 
@@ -71,6 +68,14 @@ public class Engagement {
         this.logDate = logDate;
     }
 
+    public String getFlagType() {
+        return flagType;
+    }
+
+    public void setFlagType(String flagType) {
+        this.flagType = flagType;
+    }
+
     public String getNotes() {
         return notes;
     }
@@ -90,14 +95,5 @@ public class Engagement {
     @Override
     public int hashCode() {
         return Objects.hash(id);
-    }
-
-    @Override
-    public String toString() {
-        return "Engagement{" +
-                "id=" + id +
-                ", logDate=" + logDate +
-                ", notes='" + notes + '\'' +
-                '}';
     }
 }

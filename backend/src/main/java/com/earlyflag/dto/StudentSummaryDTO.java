@@ -1,32 +1,28 @@
 package com.earlyflag.dto;
 
 public class StudentSummaryDTO {
-    private String id;
+    private Long id;
     private String name;
-    private String className;
+    private String className;   // serialized as "class" — see @JsonProperty note below
     private String section;
-    private Integer latestScore;
-    private String riskLevel;
-    private String reasonCodes;
+    private LatestRiskDTO latestRisk;
 
     public StudentSummaryDTO() {
     }
 
-    public StudentSummaryDTO(String id, String name, String className, String section, Integer latestScore, String riskLevel, String reasonCodes) {
+    public StudentSummaryDTO(Long id, String name, String className, String section, LatestRiskDTO latestRisk) {
         this.id = id;
         this.name = name;
         this.className = className;
         this.section = section;
-        this.latestScore = latestScore;
-        this.riskLevel = riskLevel;
-        this.reasonCodes = reasonCodes;
+        this.latestRisk = latestRisk;
     }
 
-    public String getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(String id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
@@ -38,6 +34,7 @@ public class StudentSummaryDTO {
         this.name = name;
     }
 
+    @com.fasterxml.jackson.annotation.JsonProperty("class")
     public String getClassName() {
         return className;
     }
@@ -54,27 +51,11 @@ public class StudentSummaryDTO {
         this.section = section;
     }
 
-    public Integer getLatestScore() {
-        return latestScore;
+    public LatestRiskDTO getLatestRisk() {
+        return latestRisk;
     }
 
-    public void setLatestScore(Integer latestScore) {
-        this.latestScore = latestScore;
-    }
-
-    public String getRiskLevel() {
-        return riskLevel;
-    }
-
-    public void setRiskLevel(String riskLevel) {
-        this.riskLevel = riskLevel;
-    }
-
-    public String getReasonCodes() {
-        return reasonCodes;
-    }
-
-    public void setReasonCodes(String reasonCodes) {
-        this.reasonCodes = reasonCodes;
+    public void setLatestRisk(LatestRiskDTO latestRisk) {
+        this.latestRisk = latestRisk;
     }
 }

@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public class FeeDTO {
-    private Long id;
     private LocalDate dueDate;
     private BigDecimal amount;
     private String paidStatus;
@@ -12,19 +11,10 @@ public class FeeDTO {
     public FeeDTO() {
     }
 
-    public FeeDTO(Long id, LocalDate dueDate, BigDecimal amount, String paidStatus) {
-        this.id = id;
+    public FeeDTO(LocalDate dueDate, BigDecimal amount, String paidStatus) {
         this.dueDate = dueDate;
         this.amount = amount;
         this.paidStatus = paidStatus;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public LocalDate getDueDate() {
