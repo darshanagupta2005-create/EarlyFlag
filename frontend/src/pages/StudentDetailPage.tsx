@@ -20,6 +20,7 @@ import { AttendanceTrendChart } from '../components/charts/AttendanceTrendChart'
 import { AcademicComparisonChart } from '../components/charts/AcademicComparisonChart';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { TableSkeleton } from '../components/StateViews';
+import { InitialsAvatar } from '../components/InitialsAvatar';
 
 interface StudentDetailPageProps {
   studentId: number;
@@ -146,14 +147,11 @@ export const StudentDetailPage: React.FC<StudentDetailPageProps> = ({
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <img
-            src={student.avatar}
-            alt={student.name}
+          <InitialsAvatar
+            name={student.name}
+            size={74}
+            radius="var(--radius-lg)"
             style={{
-              width: '74px',
-              height: '74px',
-              borderRadius: 'var(--radius-lg)',
-              objectFit: 'cover',
               border: '2px solid var(--border-strong)',
               boxShadow: 'var(--shadow-md)'
             }}

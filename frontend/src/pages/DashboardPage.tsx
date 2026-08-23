@@ -15,6 +15,7 @@ import { RiskDonutChart } from '../components/charts/RiskDonutChart';
 import { AttendanceTrendChart } from '../components/charts/AttendanceTrendChart';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { TableSkeleton } from '../components/StateViews';
+import { InitialsAvatar } from '../components/InitialsAvatar';
 
 interface DashboardPageProps {
   onNavigate: (page: string, studentId?: number) => void;
@@ -341,11 +342,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.65rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <img
-                        src={student.avatar}
-                        alt={student.name}
-                        style={{ width: '38px', height: '38px', borderRadius: '50%', objectFit: 'cover' }}
-                      />
+                      <InitialsAvatar name={student.name} size={38} />
                       <div>
                         <div style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
                           {student.name}

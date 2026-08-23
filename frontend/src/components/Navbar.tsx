@@ -17,6 +17,7 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { RiskBadge } from './Badge';
+import { InitialsAvatar } from './InitialsAvatar';
 
 interface NavbarProps {
   onToggleSidebar: () => void;
@@ -211,11 +212,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'transparent')}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <img
-                      src={student.avatar}
-                      alt={student.name}
-                      style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }}
-                    />
+                    <InitialsAvatar name={student.name} size={28} />
                     <div>
                       <div style={{ fontWeight: 600, fontSize: '0.84rem', color: 'var(--text-primary)' }}>
                         {student.name}

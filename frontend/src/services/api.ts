@@ -13,6 +13,7 @@ import { mockTeacherProfile } from './mockData';
 const STORAGE_KEYS = {
   USE_MOCK: 'earlyflag_use_mock',
   API_BASE_URL: 'earlyflag_api_url',
+  ACKNOWLEDGED_ALERTS: 'earlyflag_acknowledged_alerts',
 };
 
 export const getApiConfig = () => {
@@ -90,6 +91,40 @@ function averageGradePercent(trend: { score: number; maxScore: number }[]): numb
   return Math.round((total / valid.length) * 10) / 10;
 }
 
+function mapMarksHistory(trend: ApiStudentDetail['marksTrend']) {
+  const bySubject = new Map<string, { term: string; percentage: number }[]>();
+  for (const mark of trend) {
+    if (mark.maxScore <= 0) continue;
+    const percentage = Math.round((mark.score / mark.maxScore) * 1000) / 10;
+    const entries = bySubject.get(mark.subject) ?? [];
+    entries.push({ term: mark.term, percentage });
+    bySubject.set(mark.subject, entries);
+  }
+
+  const termOrder = (term: string) => Number(term.match(/\d+/)?.[0] ?? 0);
+  return [...bySubject.entries()].map(([subject, entries]) => {
+    const ordered = [...entries].sort((a, b) => termOrder(a.term) - termOrder(b.term) || a.term.localeCompare(b.term));
+    const first = ordered[0];
+    const latest = ordered[ordered.length - 1];
+    return {
+      subject,
+      term1: first.percentage,
+      term2: latest.percentage,
+      maxScore: 100
+    };
+  });
+}
+
+type AcknowledgedAlert = { reviewedAt: string; reviewedBy: string };
+
+function getAcknowledgedAlerts(): Record<string, AcknowledgedAlert> {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEYS.ACKNOWLEDGED_ALERTS) || '{}');
+  } catch {
+    return {};
+  }
+}
+
 function mapSummaryToStudent(s: ApiStudentSummary): Student {
   return {
     id: s.id,
@@ -139,13 +174,10 @@ function mapDetailToStudent(d: ApiStudentDetail): Student {
     subScores: d.latestRisk?.subScores ?? { attendance: 0, academic: 0, fees: 0, engagement: 0 },
     reasonCodes: d.latestRisk?.reasonCodes ?? [],
     suggestedActions: [],
-    attendanceHistory: d.attendanceTrend.map(a => ({ date: a.date, status: a.status })),
-    marksHistory: d.marksTrend.map(m => ({
-      subject: m.subject,
-      term1: m.score,
-      term2: m.score,
-      maxScore: m.maxScore
-    })),
+    attendanceHistory: [...d.attendanceTrend]
+      .sort((a, b) => a.date.localeCompare(b.date))
+      .map(a => ({ date: a.date, status: a.status })),
+    marksHistory: mapMarksHistory(d.marksTrend),
     feeStatus: d.fees[0]
       ? { amount: d.fees[0].amount, dueDate: d.fees[0].dueDate, paidStatus: d.fees[0].paidStatus, overdueDays: 0 }
       : { amount: 0, dueDate: '', paidStatus: 'paid', overdueDays: 0 },
@@ -173,7 +205,11 @@ export const apiService = {
     const config = getApiConfig();
     const res = await fetch(`${config.baseUrl}/students`);
     const data: ApiStudentSummary[] = await readJsonOrThrow(res, 'Failed to fetch students');
-    return data.map(mapSummaryToStudent);
+    // The list endpoint deliberately stays lightweight. Hydrate each summary
+    // with its detail endpoint so attendance, marks, fees and engagement data
+    // are available throughout the dashboard rather than appearing as zeros.
+    const detailedStudents = await Promise.all(data.map(s => this.getStudentById(s.id)));
+    return detailedStudents.map((student, index) => student ?? mapSummaryToStudent(data[index]));
   },
 
   async getStudentById(id: number): Promise<Student | null> {
@@ -236,28 +272,40 @@ export const apiService = {
   // Postgres, so alerts are derived client-side from students already fetched.
   async getRiskAlerts(): Promise<RiskAlert[]> {
     const students = await this.getStudents();
-    return students
-      .filter(s => s.riskLevel === 'MEDIUM' || s.riskLevel === 'HIGH')
-      .map(s => ({
-        id: `alert-${s.id}`,
+    const acknowledgements = getAcknowledgedAlerts();
+    const atRiskStudents = students.filter(s => s.riskLevel === 'MEDIUM' || s.riskLevel === 'HIGH');
+    return atRiskStudents
+      .map(s => {
+        const id = `alert-${s.id}`;
+        const acknowledgement = acknowledgements[id];
+        return {
+        id,
         studentId: s.id,
         studentName: s.name,
         studentCode: s.studentId,
         classSection: `${s.class}-${s.section}`,
         riskScore: s.riskScore,
         riskLevel: s.riskLevel,
-        reasons: s.reasonCodes,
+        reasons: s.reasonCodes.length > 0 ? s.reasonCodes : ['Risk score requires review'],
         date: s.lastUpdated,
-        reviewed: false
-      }));
+        reviewed: Boolean(acknowledgement),
+        reviewedAt: acknowledgement?.reviewedAt,
+        reviewedBy: acknowledgement?.reviewedBy
+      };
+    });
   },
 
-  // No backend endpoint for this — kept as a local-only UI acknowledgement.
+  // The shared backend contract has no alert-acknowledgement endpoint, so the
+  // teacher's acknowledgement is persisted locally and survives refreshes.
   async markAlertReviewed(alertId: string, reviewedBy: string): Promise<RiskAlert> {
     const alerts = await this.getRiskAlerts();
     const alert = alerts.find(a => a.id === alertId);
     if (!alert) throw new Error('Alert not found');
-    return { ...alert, reviewed: true, reviewedAt: new Date().toLocaleString(), reviewedBy };
+    const acknowledgements = getAcknowledgedAlerts();
+    const acknowledgement = { reviewedAt: new Date().toLocaleString(), reviewedBy };
+    acknowledgements[alertId] = acknowledgement;
+    localStorage.setItem(STORAGE_KEYS.ACKNOWLEDGED_ALERTS, JSON.stringify(acknowledgements));
+    return { ...alert, reviewed: true, ...acknowledgement };
   },
 
   async addIntervention(studentId: number, intervention: Omit<Intervention, 'id'>): Promise<Student> {

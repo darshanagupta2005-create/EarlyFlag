@@ -11,6 +11,7 @@ import {
 import { RiskBadge } from '../components/Badge';
 import { Breadcrumbs } from '../components/Breadcrumbs';
 import { EmptyState, TableSkeleton } from '../components/StateViews';
+import { InitialsAvatar } from '../components/InitialsAvatar';
 
 interface StudentListPageProps {
   onNavigate: (page: string, studentId?: number) => void;
@@ -248,11 +249,7 @@ export const StudentListPage: React.FC<StudentListPageProps> = ({ onNavigate }) 
                     {/* Student Name & Avatar */}
                     <td>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                        <img
-                          src={student.avatar}
-                          alt={student.name}
-                          style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
-                        />
+                        <InitialsAvatar name={student.name} size={36} />
                         <div>
                           <div style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
                             {student.name}

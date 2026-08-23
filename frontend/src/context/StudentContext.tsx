@@ -109,7 +109,9 @@ export const StudentProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const selectStudentById = async (id: number): Promise<Student | null> => {
     const cached = students.find(s => s.id === id);
-    if (cached) {
+    // List responses intentionally omit trend history. Only reuse a cached
+    // value once it is a full student-detail record; otherwise fetch the API.
+    if (cached && (cached.attendanceHistory.length > 0 || cached.marksHistory.length > 0)) {
       setSelectedStudent(cached);
       return cached;
     }

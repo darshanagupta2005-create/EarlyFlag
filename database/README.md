@@ -28,3 +28,7 @@ python compute_risk.py --as-of 2026-08-20
 - **Riya Das (ID 8):** positive/steady data — intended LOW-risk contrast.
 
 The reference date matters because overdue-fee scoring uses days overdue. Use `--as-of 2026-08-20` for the intended demo results.
+
+## Larger UI dataset
+
+`seed_50_students.sql` is a separate, full replacement demo dataset for the dashboard. It contains 50 students, 1,400 attendance rows, 400 marks rows, a fee record for every student, and engagement notes for every student. It intentionally creates 10 clear HIGH-risk cases, 10 MEDIUM-risk cases, and a broad LOW-risk comparison group. Run it after `schema.sql`, then rerun the risk engine. It deliberately begins with `TRUNCATE`, so do not use it against production/student data.
