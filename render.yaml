@@ -39,12 +39,9 @@ services:
   - type: web
     name: earlyflag-web
     runtime: static
-    buildCommand: npm ci && npm run build
-    staticPublishPath: dist
     rootDir: frontend
-    envVars:
-      - key: VITE_API_BASE_URL
-        value: https://earlyflag-api.onrender.com/api
+    buildCommand: "sed -i 's|http://localhost:8080/api|https://earlyflag-api.onrender.com/api|' src/services/api.ts && npm ci && npm run build"
+    staticPublishPath: dist
 
 databases:
   - name: earlyflag-db
