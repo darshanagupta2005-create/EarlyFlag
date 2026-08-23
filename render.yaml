@@ -1,12 +1,11 @@
 services:
   - type: web
     name: earlyflag-api
-    runtime: java
+    runtime: docker
     plan: free
     region: oregon
     rootDir: backend
-    buildCommand: mvn -DskipTests package
-    startCommand: java -jar target/earlyflag-backend-0.0.1-SNAPSHOT.jar
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: DATABASE_URL
         fromDatabase:
